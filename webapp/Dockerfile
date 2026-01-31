@@ -2,12 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Empêche la création de fichiers .pyc et assure les logs en temps réel
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     AIRFLOW_HOME=/app
 
-# Installation des dépendances système (OCR, OpenCV et outils Airflow)
+# Installation des dépendances système
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     tesseract-ocr-eng \
@@ -20,19 +19,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# 1. Copie et installe Airflow
-COPY requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# ON COPIE LES DEUX FICHIERS EN MÊME TEMPS
+COPY requirements.txt requirements-web.txt ./
 
-# 2. Copie et installe le Web 
-COPY requirements-web.txt ./requirements-web.txt
-RUN pip install --no-cache-dir -r requirements-web.txt
-
+# ON FORCE UNE INSTALLATION PROPRE ET COMPATIBLE
+# On force numpy < 2.0 pour éviter l'erreur que tu as reçue
+RUN pip install --no-cache-dir "numpy<2.0" && \
+    pip install --no-cache-dir -r requirements.txt -r requirements-web.txt
 
 COPY . .
 
-
 EXPOSE 5000 8080
 
-# Commande par défaut (Sera écrasée par Railway pour les services Airflow)
 CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
