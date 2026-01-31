@@ -9,7 +9,7 @@ import numpy as np
 import re
 import os
 from typing import Dict, List, Any, Optional
-from db_utils import get_db_connection
+from plugins.db_utils import get_db_connection
 
 
 def _configure_tesseract():
