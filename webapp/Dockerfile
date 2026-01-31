@@ -24,8 +24,7 @@ COPY requirements.txt requirements-web.txt ./
 
 # ON FORCE UNE INSTALLATION PROPRE ET COMPATIBLE
 # On force numpy < 2.0 pour éviter l'erreur que tu as reçue
-RUN pip install --no-cache-dir "numpy<2.0" && \
-    pip install --no-cache-dir -r requirements.txt -r requirements-web.txt
+RUN pip install --no-cache-dir "numpy<2.0" "setuptools<70.0.0" && pip install --no-cache-dir -r requirements.txt -r requirements-web.txt
 
 COPY . .
 
