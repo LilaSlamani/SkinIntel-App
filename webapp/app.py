@@ -31,7 +31,7 @@ def trigger_airflow_analysis(user_id, profile_data, products_data):
     Crée le fichier input dans un volume partagé, appelle l'API, et attend les résultats
     """
     try:
-        # Création du fichier JSON input
+        # 1. Création du fichier JSON input pour Airflow
         input_data = {
             'userId': user_id,
             'profile': profile_data,
@@ -48,29 +48,33 @@ def trigger_airflow_analysis(user_id, profile_data, products_data):
         
         print(f"Fichier input écrit : {input_path}")
         
-        # Appel API Airflow pour déclencher le DAG
-        print(f"Déclenchement du DAG pour {user_id}...")
-        
+        # 2. Configuration de l'appel API Airflow
+        # On utilise le domaine interne Railway pour une communication directe
         airflow_url = os.environ.get('AIRFLOW_URL', 'http://airflow-webserver.railway.internal:8080').rstrip('/')
         airflow_user = os.environ.get('AIRFLOW_USER', 'admin')
         airflow_password = os.environ.get('AIRFLOW_PASSWORD', 'admin')
 
+        print(f"Déclenchement du DAG pour {user_id} via {airflow_url}...")
+        
+        # 3. Appel API avec authentification Basic Auth
         response = requests.post(
             f'{airflow_url}/api/v1/dags/skincare_user_analysis/dagRuns',
             auth=(airflow_user, airflow_password),
             headers={'Content-Type': 'application/json'},
-            json={'conf': {'user_id': user_id}}
+            json={'conf': {'user_id': user_id}},
+            timeout=10 # Timeout pour éviter de bloquer Flask
         )
         
         print(f"Réponse API Airflow - Status: {response.status_code}")
         
         if response.status_code not in [200, 201]:
-            print(f"Erreur API : {response.text}")
+            # Si on a encore une 401, c'est que l'user admin n'existe pas dans Airflow
+            print(f"Erreur API ({response.status_code}) : {response.text}")
             return None
         
         print("DAG déclenché avec succès, attente des résultats...")
         
-        # Polling : attente du fichier résultat (max 60 secondes)
+        # 4. Polling : attente du fichier résultat (max 60 secondes)
         results_dir = _data_path('results')
         os.makedirs(results_dir, exist_ok=True)
         result_path = os.path.join(results_dir, f'{user_id}_results.json')
