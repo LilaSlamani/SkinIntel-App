@@ -51,7 +51,7 @@ def trigger_airflow_analysis(user_id, profile_data, products_data):
         # Appel API Airflow pour déclencher le DAG
         print(f"Déclenchement du DAG pour {user_id}...")
         
-        airflow_url = os.environ.get('AIRFLOW_URL', 'http://localhost:8080').rstrip('/')
+        airflow_url = os.environ.get('AIRFLOW_URL', 'http://airflow-webserver.railway.internal:8080').rstrip('/')
         airflow_user = os.environ.get('AIRFLOW_USER', 'admin')
         airflow_password = os.environ.get('AIRFLOW_PASSWORD', 'admin')
 
