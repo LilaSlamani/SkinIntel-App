@@ -37,20 +37,27 @@ def normalize_ingredient_name(raw_name: str) -> str:
 
 
 def get_db_connection():
-    """
-    Crée une connexion à PostgreSQL
+    # Railway fournit l'URL complète, on l'utilise en priorité absolue
+    database_url = os.environ.get('DATABASE_URL')
     
-    Returns:
-        Connection object psycopg2
-    """
-    conn = psycopg2.connect(
-        host="postgres",       # Nom du container Docker
-        port=5432,             # Port PostgreSQL
-        database="airflow",    # Nom de la base
-        user="airflow",        # Username
-        password="airflow"     # Password
-    )
-    return conn
+    if database_url:
+        try:
+            return psycopg2.connect(database_url)
+        except Exception as e:
+            print(f"Erreur avec DATABASE_URL: {e}")
+
+    # Si DATABASE_URL échoue, on construit manuellement avec les bonnes infos Railway
+    try:
+        return psycopg2.connect(
+            host=os.environ.get('DB_HOST', 'postgres.railway.internal'),
+            database=os.environ.get('DB_NAME', 'railway'),
+            user=os.environ.get('DB_USER', 'postgres'), # Changé 'airflow' en 'postgres'
+            password=os.environ.get('DB_PASSWORD', 'OipcJXSrnnzFXeszAnAFVDncGocdRuzb'),
+            port=os.environ.get('DB_PORT', '5432')
+        )
+    except Exception as e:
+        print(f"❌ Impossible de se connecter à la base : {e}")
+        return None
 
 
 def get_ingredients_data(ingredient_names: List[str]) -> List[Dict[str, Any]]:
