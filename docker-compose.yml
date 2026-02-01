@@ -20,6 +20,8 @@ services:
     depends_on:
       - postgres
     environment:
+      # Fix pour l'import des plugins
+      PYTHONPATH: /opt/airflow
       AIRFLOW__API__AUTH_BACKENDS: ${AIRFLOW__API__AUTH_BACKENDS:-airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session}
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
@@ -28,6 +30,9 @@ services:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     ports:
       - "8080:8080"
+    volumes:
+      - ./webapp/plugins:/opt/airflow/plugins:ro
+      - ./webapp/data:/opt/airflow/data
     command: >
       bash -c "airflow db migrate && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true && airflow webserver"
     networks:
@@ -39,9 +44,14 @@ services:
     depends_on:
       - postgres
     environment:
+      # Fix pour l'import des plugins
+      PYTHONPATH: /opt/airflow
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    volumes:
+      - ./webapp/plugins:/opt/airflow/plugins:ro
+      - ./webapp/data:/opt/airflow/data
     command: >
       bash -c "airflow db migrate && airflow scheduler"
     networks:
@@ -56,13 +66,18 @@ services:
       - postgres
       - airflow-webserver
     environment:
-      # Ligne CRITIQUE pour corriger l'erreur de connexion
+      # Indique à Python que le dossier racine est /app pour trouver 'plugins'
+      PYTHONPATH: /app
+      # Identifiants réels Railway
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
       SQLALCHEMY_DATABASE_URI: ${DATABASE_URL:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
+      # URL Interne pour Railway
       AIRFLOW_URL: ${AIRFLOW_URL:-http://airflow-webserver.railway.internal:8080}
       PORT: 5000
     ports:
       - "5000:5000"
+    volumes:
+      - ./webapp:/app
     restart: unless-stopped
     networks:
       - skincare-network
