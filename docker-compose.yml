@@ -34,7 +34,7 @@ services:
       - ./webapp/plugins:/opt/airflow/plugins:ro
       - ./webapp/data:/opt/airflow/data
     command: >
-      bash -c "airflow db migrate && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true && airflow webserver"
+      bash -c "airflow webserver"
     networks:
       - skincare-network
 
@@ -67,7 +67,7 @@ services:
       - airflow-webserver
     environment:
       # Indique à Python que le dossier racine est /app pour trouver 'plugins'
-      PYTHONPATH: /app
+      PYTHONPATH: /webapp
       # Identifiants réels Railway
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
       SQLALCHEMY_DATABASE_URI: ${DATABASE_URL:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
