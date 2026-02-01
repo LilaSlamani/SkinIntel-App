@@ -53,7 +53,7 @@ services:
       - ./webapp/plugins:/opt/airflow/plugins:ro
       - ./webapp/data:/opt/airflow/data
     command: >
-      bash -c "airflow db migrate && airflow scheduler"
+      bash -c "airflow scheduler"
     networks:
       - skincare-network
 
