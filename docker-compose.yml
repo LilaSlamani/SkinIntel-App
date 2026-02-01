@@ -20,21 +20,22 @@ services:
     depends_on:
       - postgres
     environment:
-      # Fix pour l'import des plugins
+      # --- OPTIMISATION RAM (MOINS DE 1GB) ---
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
       PYTHONPATH: /opt/airflow
+      # ---------------------------------------
       AIRFLOW__API__AUTH_BACKENDS: ${AIRFLOW__API__AUTH_BACKENDS:-airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session}
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
       AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY:-skincare_secret_key_2026_secure}
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     ports:
       - "8080:8080"
     volumes:
       - ./webapp/plugins:/opt/airflow/plugins:ro
       - ./webapp/data:/opt/airflow/data
-    command: >
-      bash -c "airflow webserver"
+    # On lance directement le serveur pour éviter le statut "Completed"
+    command: airflow webserver
     networks:
       - skincare-network
 
@@ -44,16 +45,15 @@ services:
     depends_on:
       - postgres
     environment:
-      # Fix pour l'import des plugins
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
       PYTHONPATH: /opt/airflow
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
     volumes:
       - ./webapp/plugins:/opt/airflow/plugins:ro
       - ./webapp/data:/opt/airflow/data
-    command: >
-      bash -c "airflow scheduler"
+    command: airflow scheduler
     networks:
       - skincare-network
 
@@ -66,12 +66,10 @@ services:
       - postgres
       - airflow-webserver
     environment:
-      # Indique à Python que le dossier racine est /app pour trouver 'plugins'
-      PYTHONPATH: /webapp
-      # Identifiants réels Railway
+      PYTHONPATH: /app
+      # Utilisation des accès vérifiés
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
       SQLALCHEMY_DATABASE_URI: ${DATABASE_URL:-postgresql+psycopg2://postgres:OipcJXSrnnzFXeszAnAFVDncGocdRuzb@postgres.railway.internal:5432/railway}
-      # URL Interne pour Railway
       AIRFLOW_URL: ${AIRFLOW_URL:-http://airflow-webserver.railway.internal:8080}
       PORT: 5000
     ports:
